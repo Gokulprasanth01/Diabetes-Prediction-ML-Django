@@ -1,0 +1,149 @@
+{%extends 'base.html'%} 
+{% block title %} Diabetes Prediction  {% endblock %}
+{%block content%}
+	<!-- banner 2 -->
+	<div class="inner-banner-w3ls">
+		<div class="container">
+
+		</div>
+		<!-- //banner 2 -->
+	</div>
+	<!-- page details -->
+	<div class="breadcrumb-agile">
+		<div aria-label="breadcrumb">
+			<ol class="breadcrumb">
+				<li class="breadcrumb-item">
+					<a href="/">Home</a>
+				</li>
+				<li class="breadcrumb-item active" aria-current="page">Diabetes Disease Prediction</li>
+			</ol>
+		</div>
+	</div>
+	<!-- //page details -->
+
+<!-- contact -->
+<div class="agileits-contact py-5">
+  <div class="py-xl-5 py-lg-3">
+    <div class="w3ls-titles text-center mb-5">
+      <h3 class="title">Diabetes Disease Prediction</h3>
+      <span>
+        <i class="fas fa-user-md"></i>
+      </span>
+      <hr />
+      {% if context %}
+      <div class="display-4 my-2 text-center">
+        Your diabetes disease is {{ context }} 
+      </div>
+      {% endif %}
+    </div>
+    <div class="d-flex">
+      <div class="col-lg-5 w3_agileits-contact-left">
+      </div>
+      <div class="col-lg-7 contact-right-w3l">
+        <h5 class="title-w3 text-center mb-5">Get In Touch</h5>
+        <!-- start from here -->
+       
+        <form class="row" method="POST" action="{% url 'diabetes' %}">
+          {% csrf_token %}
+          <div class="col-md-6">
+            <label style="color: black;">Gender</label>
+                <div class="form-group">
+                  <select class="form-control" id="gender" name="gender">
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                  </select>
+                </div>
+            <label style="color: black;" >age</label>
+            <div class="form-group">
+          
+              <input
+                type="number"
+                step=".00001"
+                class="form-control"
+                id="glucose"
+                value="0"
+                name="age"
+                placeholder="age"
+              />
+            </div>
+            <label style="color: black;" >Hyper Tension</label>
+            <div class="form-group">
+                  <select class="form-control" id="hypertension" name="hypertension">
+                    <option value="1">1</option>
+                    <option value="0">0</option>
+                  </select>
+                </div>
+            <label style="color: black;" >Heart Diseases</label>
+            <div class="form-group">
+                  <select class="form-control" id="heart_disease" name="heart_disease">
+                    <option value="1">1</option>
+                    <option value="0">0</option>
+                  </select>
+            </div>
+            <label style="color: black;">Smoking History</label>
+            <div class="form-group">
+              <select class="form-control" id="smoking_history" name="smoking_history">
+                <option value="never">never</option>
+                <option value="current">current</option>
+                <option value="no_info">No Info</option>
+                <option value="former">former</option>
+                <option value="ever">ever</option>
+                <option value="not_current">not current</option>
+              </select>
+            </div>
+          </div>
+         
+          <div class="col-md-4">
+            <label style="color: black;" >BMI</label>
+            <div class="form-group">
+            
+              <input
+              
+                type="number"
+                step=".00001"
+                class="form-control"
+                id="bmi"
+                value="0"
+                name="bmi"
+              />
+            </div>
+            <label style="color: black;" >Blood Glucose</label>
+            <div class="form-group">
+            
+              <input
+            
+                type="number"
+                step=".00001"
+                class="form-control"
+                id="HbA1c_level"
+                value="0"
+                name="HbA1c_level"
+              />
+            </div>
+
+            <label style="color: black;" >blood_glucose_level</label>
+            <div class="form-group mb-5">
+             
+              <input
+              
+                type="number"
+                step=".00001"
+                class="form-control"
+                id="blood_glucose_level"
+                value="0"
+                name="blood_glucose_level"
+              />
+            </div>
+            <button type="submit" class="btn-lg btn-block btn btn-primary mb-5">
+              Submit
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- //contact -->
+
+
+{% endblock %}
