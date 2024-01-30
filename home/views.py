@@ -82,7 +82,7 @@ def diabetes(request):
         gender = str(request.POST['gender'])
         age = float(request.POST['age'])
         hypertension = float(request.POST['hypertension'])
-        heart_disease = float(request.POST['heart_disease'])
+        heart_disease = float   (request.POST['heart_disease'])
         smoking_history = str(request.POST['smoking_history'])
         bmi = float(request.POST['bmi'])
         HbA1c_level = float(request.POST['HbA1c_level'])
