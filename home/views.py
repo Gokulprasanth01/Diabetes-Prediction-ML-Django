@@ -1,74 +1,54 @@
+# Import necessary libraries
 from Cryptodome.Cipher import AES
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+from cryptography.hazmat.backends import default_backend
+import base64
+import joblib
 import mysql.connector
 import numpy as np
 import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
-from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
-from cryptography.hazmat.backends import default_backend
-import joblib
-import mysql.connector
 from django.shortcuts import render
 from django.views.decorators.cache import cache_control
-import base64
 
-key = b'Sixteen byte key'
-fixed_iv = bytes([0] * 16)
 
+# Function to pad data for AES encryption
+def pad_data(data):
+    block_size = algorithms.AES.block_size // 8
+    padding_length = block_size - (len(data) % block_size)
+    padding = bytes([padding_length] * padding_length)
+    return data + padding
+
+
+# Function to encrypt data using AES
+def encrypt_data(key, data):
+    cipher = Cipher(algorithms.AES(key), modes.ECB(), backend=default_backend())
+    encryptor = cipher.encryptor()
+    return encryptor.update(pad_data(data)) + encryptor.finalize()
+
+
+# Function to encrypt each cell in a DataFrame
+def encrypt_dataframe(df, key):
+    return df.applymap(lambda cell: encrypt_data(key, str(cell).encode('utf-8')))
+
+
+# Function to convert bytes to integer
+def base64_to_int(df):
+    return int.from_bytes(df, byteorder='big')  # or 'little' depending on your byte order
+
+
+# Load the pre-trained model and encoder
 classifier = joblib.load('accounts/model/ran.pkl')
 encoder = joblib.load('accounts/model/sac.pkl')
 
-
-def encrypt(msg):
-    cipher = AES.new(key, AES.MODE_EAX, nonce=fixed_iv)
-    ciphertext, tag = cipher.encrypt_and_digest(str(msg).encode('utf-8'))
-
-    # Use Base64 encoding for ciphertext and tag
-    ciphertext_base64 = base64.b64encode(ciphertext).decode('utf-8')
-    tag_base64 = base64.b64encode(tag).decode('utf-8')
-
-    return f"{ciphertext_base64}:{tag_base64}"
+# Define a fixed key for encryption (replace with secure key management)
+key = b'Sixteen byte key'
 
 
-def base64_string_to_int(base64_string):
-    # Decode Base64 and convert to integer
-    return int.from_bytes(base64.b64decode(base64_string), byteorder='big', signed=False)
+# Function to store results in the database
 
 
-def index(request):
-    return render(request, 'index.html')
-
-
-def store_results_in_database(gender, age, hypertension, heart_disease, smoking_history, bmi, HbA1c_level,
-                              blood_glucose_level):
-    try:
-        con = mysql.connector.connect(host='localhost', user='root', password='Itachi@001')
-
-        if con.is_connected():
-            cursor = con.cursor()
-            database_name = 'healthcare1'
-            create_database_query = f"CREATE DATABASE IF NOT EXISTS {database_name}"
-            cursor.execute(create_database_query)
-            cursor.execute(f"USE {database_name}")
-
-            normal_table_name = 'diabetes'
-            create_normal_table_query = f"CREATE TABLE IF NOT EXISTS {normal_table_name} (id INT AUTO_INCREMENT PRIMARY KEY, \
-                                          gender VARCHAR(255), age VARCHAR(255), hypertension VARCHAR(255), \
-                                          heart_disease VARCHAR(255), smoking_history VARCHAR(255), \
-                                          bmi VARCHAR(255), HbA1c_level VARCHAR(255), blood_glucose_level VARCHAR(255))"
-            cursor.execute(create_normal_table_query)
-
-            insert_normal_query = f"INSERT INTO {normal_table_name} (gender, age, hypertension, heart_disease, smoking_history, bmi, HbA1c_level, blood_glucose_level) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
-            normal_data = (
-            gender, age, hypertension, heart_disease, smoking_history, bmi, HbA1c_level, blood_glucose_level)
-            cursor.execute(insert_normal_query, tuple(map(str, normal_data)))
-
-            con.commit()
-            cursor.close()
-            con.close()
-
-    except Exception as e:
-        print(f"Error storing results in the database: {e}")
-
+# Define the Django views
 
 @cache_control(no_cache=True, must_revalidate=True, no_store=True)
 def index(request):
@@ -79,36 +59,46 @@ def index(request):
 def diabetes(request):
     value = ''
     if request.method == "POST":
+        # Extract user input from the form
         gender = str(request.POST['gender'])
         age = float(request.POST['age'])
         hypertension = float(request.POST['hypertension'])
-        heart_disease = float   (request.POST['heart_disease'])
+        heart_disease = float(request.POST['heart_disease'])
         smoking_history = str(request.POST['smoking_history'])
         bmi = float(request.POST['bmi'])
         HbA1c_level = float(request.POST['HbA1c_level'])
         blood_glucose_level = float(request.POST['blood_glucose_level'])
 
-        en_gen = base64_string_to_int(encrypt(gender).split(':')[0])
-        en_age = base64_string_to_int(encrypt(age).split(':')[0])
-        en_hy = base64_string_to_int(encrypt(hypertension).split(':')[0])
-        en_hd = base64_string_to_int(encrypt(heart_disease).split(':')[0])
-        en_bmi = base64_string_to_int(encrypt(bmi).split(':')[0])
-        en_sh = base64_string_to_int(encrypt(smoking_history).split(':')[0])
-        en_hl = base64_string_to_int(encrypt(HbA1c_level).split(':')[0])
-        en_bl = base64_string_to_int(encrypt(blood_glucose_level).split(':')[0])
+        # Encrypt and convert user input to integers
+        en_gen = base64_to_int(encrypt_data(key, gender.encode('utf-8')))
+        en_age = base64_to_int(encrypt_data(key, str(age).encode('utf-8')))
+        en_hy = base64_to_int(encrypt_data(key, str(hypertension).encode('utf-8')))
+        en_hd = base64_to_int(encrypt_data(key, str(heart_disease).encode('utf-8')))
+        en_bmi = base64_to_int(encrypt_data(key, str(bmi).encode('utf-8')))
+        en_sh = base64_to_int(encrypt_data(key, smoking_history.encode('utf-8')))
+        en_hl = base64_to_int(encrypt_data(key, str(HbA1c_level).encode('utf-8')))
+        en_bl = base64_to_int(encrypt_data(key, str(blood_glucose_level).encode('utf-8')))
 
+        # Create a new instance for prediction
         new_instance = [[en_gen, en_age, en_hy, en_hd, en_bmi, en_sh, en_hl, en_bl]]
-        # Check the number of features before applying the encoder
+
+        # Encode features using the pre-trained encoder
         new_instance_encoded = encoder.transform(new_instance)
+        print(new_instance_encoded)
+        # Make predictions using the pre-trained Random Forest Classifier
         encrypted_prediction = classifier.predict(new_instance_encoded)
 
+        # Determine the result based on the prediction
         if encrypted_prediction[0] == 1:
             value = 'Positive'
         elif encrypted_prediction[0] == 0:
             value = 'Negative'
-            store_results_in_database(gender, age, hypertension, heart_disease, smoking_history, bmi, HbA1c_level, blood_glucose_level)
+            # Store results in the database for negative predictions
+            # store_results_in_database(gender, age, hypertension, heart_disease, smoking_history, bmi, HbA1c_level,
+            #                           blood_glucose_level)
 
     return render(request, 'diabetes.html', {'context': value})
+
 
 def breast(request):
     # Reading training data set.
