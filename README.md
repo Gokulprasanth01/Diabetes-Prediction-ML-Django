@@ -1,7 +1,3 @@
-Certainly! Below is the README.md file content for your Django project:
-
----
-
 # Django Healthcare Prediction Website
 
 This Django project implements a healthcare prediction website for diabetes detection using machine learning techniques. It utilizes a trained Random Forest Classifier to predict the likelihood of diabetes based on user input.
